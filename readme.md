@@ -112,3 +112,9 @@ jours lock all
 jours unlock all
 ```
 
+## Changing your password
+To change your password use
+```
+jours rehash
+```
+You'll be asked your current password and prompted to enter a new one. 

@@ -277,6 +277,13 @@ jours lock all
 # or
 
 jours unlock all
+
+Changing your password
+To change your password use
+
+jours rehash
+
+You'll be asked your current password and prompted to enter a new one.
 " >readme.txt
 
 	echo -e "Congratulations! Your journal is ready to go. Compose an entry with ${GREEN}jours compose${RESET}"
