@@ -1,4 +1,5 @@
 # Jours
+#### 🚧 _This is a W.I.P._ 🚧
 Jours is a simple CLI designed for safe and secure journaling. 
 
 ## Installing
