@@ -441,7 +441,6 @@ function check_current_journal() {
 
 function create_password() {
 	echo -e "Please enter a password you'd like to use or hit the ${GREEN}enter${RESET} key to generate a random one"
-	echo "...The latter is recommended"
 	read -s -r NEW_PASS
 	target_directory=$JOURS_ROOT_DIRECTORY
 
