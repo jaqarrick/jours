@@ -1,9 +1,21 @@
 # Jours
 Jours is a simple CLI designed for safe and secure journaling. 
 
+## Installing
+Use curl to add `jours` to your path:
+
+```
+curl 'https://raw.githubusercontent.com/jaqarrick/jours/main/jours.sh' -o /usr/local/bin/jours
+```
+Make the script executable:
+```
+chmod +x /usr/local/bin/jours
+```
+
+
 ## Getting started
 
-After installing the cli run
+After installing run
 
 ```
 jours init
