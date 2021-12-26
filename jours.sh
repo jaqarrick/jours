@@ -110,13 +110,12 @@ function init_journal() {
 	echo "JOURS_ENTRIES_DIRECTORY='$JOURS_ROOT_DIRECTORY/entries'" >>~/.joursconfig
 	echo "Enter a name for this journal"
 	read -r journal_name
-	echo "CURRENT_JOURNAL='$journal_name'" >>"$JOURS_ROOT_DIRECTORY"/entries/.current
-	echo "AUTHOR='$AUTHOR'" >>~/.joursconfig
-
 	### Create all the internal directories and files ###
 	cd "$JOURS_ROOT_DIRECTORY" || exit
 	mkdir entries exposed
 	mkdir entries/"$journal_name"
+	echo "CURRENT_JOURNAL='$journal_name'" >>"$JOURS_ROOT_DIRECTORY"/entries/.current
+	echo "AUTHOR='$AUTHOR'" >>~/.joursconfig
 	echo "
 Jours is a simple CLI designed for safe and secure journaling.
 Getting started
@@ -360,32 +359,9 @@ function jours_logout() {
 	echo "Please confirm your password:"
 	read -r -s pass
 	validate_password "$pass"
-	echo "Have you saved your password correctly? ${ULINE}This is important.${RESET} [y/n]"
-	read -r answer
-	echo "$answer"
-	if [ "$answer" == "y" ]; then
-		echo "Clearing session information"
-		if [ -d "$JOURS_ROOT_DIRECTORY/exposed/" ]; then
-			rm -rf "$JOURS_ROOT_DIRECTORY"/exposed/
-		fi
-		padlock_journals lock "$pass"
-		padlock_entries lock "$pass"
-		echo -e "${GREEN}Succesfully locked all entries! Have a good day!${RESET}"
-	elif [ "$answer" == "n" ]; then
-		echo "Make sure you have saved your password!"
-		echo "Do you want to view your password? [y/n]"
-		read -r confirm_view_pass
-		if [ "$confirm_view_pass" == "y" ]; then
-			echo "Your password is: $(cat .secret)"
-		fi
-		padlock_all lock
-		echo -e "${GREEN}Succesfully locked all entries! Have a good day!${RESET}"
-
-	else
-		echo "Unknown answer... type y or n!"
-		jours_logout
-	fi
-
+	padlock_journals lock "$pass"
+	padlock_entries lock "$pass"
+	echo "${GREEN}Logout success! Goodbye."
 }
 
 function validate_day_format() {
@@ -521,34 +497,35 @@ function padlock_multiple() {
 	[[ $option = "lock" ]] && local input_file_type=".txt" || local input_file_type=".enc"
 	[[ $option = "lock" ]] && local output_file_type=".enc" || local output_file_type=".txt"
 
-	local full_dirname_to_lock="$JOURS_ENTRIES_DIRECTORY/$CURRENT_JOURNAL/$dirname_to_lock"
-	cd "$full_dirname_to_lock" || exit
-	for file in *; do
-		input_file="$(pwd)/$file"
-		output_file="$(pwd)/${file%.*}$output_file_type"
-		if [[ $file == *$input_file_type ]]; then
-			encrypt_decrypt_single_file $encrypt_option "$input_file" "$output_file" "$password"
-			rm "$input_file"
-		fi
-
-		if [[ $* == *-read* ]]; then
-			local journal_file_path="$JOURS_ROOT_DIRECTORY/exposed/$CURRENT_JOURNAL.txt"
-
-			if [ ! -d "$JOURS_ROOT_DIRECTORY/exposed/" ]; then
-				mkdir "$JOURS_ROOT_DIRECTORY"/exposed/
+	full_dirname_to_lock="$JOURS_ENTRIES_DIRECTORY/$CURRENT_JOURNAL/$dirname_to_lock"
+	if [ -d "$full_dirname_to_lock" ]; then
+		cd "$full_dirname_to_lock"
+		for file in *; do
+			input_file="$(pwd)/$file"
+			output_file="$(pwd)/${file%.*}$output_file_type"
+			if [[ $file == *$input_file_type ]]; then
+				encrypt_decrypt_single_file $encrypt_option "$input_file" "$output_file" "$password"
+				rm "$input_file"
 			fi
-			if [ ! -f "$journal_file_path" ]; then
-				touch "$journal_file_path"
+
+			if [[ $* == *-read* ]]; then
+				local journal_file_path="$JOURS_ROOT_DIRECTORY/exposed/$CURRENT_JOURNAL.txt"
+
+				if [ ! -d "$JOURS_ROOT_DIRECTORY/exposed/" ]; then
+					mkdir "$JOURS_ROOT_DIRECTORY"/exposed/
+				fi
+				if [ ! -f "$journal_file_path" ]; then
+					touch "$journal_file_path"
+				fi
+				cat "$output_file" >>"$journal_file_path"
+				echo "
+
+				- - - - - - - - - - - - - - -
+
+				" >>"$journal_file_path"
 			fi
-			cat "$output_file" >>"$journal_file_path"
-			echo "
-
-			- - - - - - - - - - - - - - -
-
-			" >>"$journal_file_path"
-		fi
-	done
-
+		done
+	fi
 }
 
 function padlock_all() {
@@ -579,7 +556,7 @@ function padlock_journals() {
 	for jour in $JOURS_ENTRIES_DIRECTORY/*/; do
 		echo "journal: $jour"
 		for dir in $jour/*/; do
-			local dir=${dir%*/} # remove the trailing "/"
+			dir=${dir%*/} # remove the trailing "/"
 			padlock_multiple "$option" "${dir##*/}" "$password"
 		done
 	done
