@@ -54,8 +54,6 @@ function check_init_status() {
 		fi
 	else
 		source "${CONFIG_PATH}"
-		source "$JOURS_ENTRIES_DIRECTORY"/.current
-		echo "current journal: $CURRENT_JOURNAL"
 	fi
 
 }
@@ -103,18 +101,13 @@ function init_journal() {
 
 	echo "Who is the author of this journal?"
 	read -r AUTHOR
-
 	create_password
 	touch ~/.joursconfig
+	mkdir entries exposed
 	echo "JOURS_ROOT_DIRECTORY='$JOURS_ROOT_DIRECTORY'" >>~/.joursconfig
 	echo "JOURS_ENTRIES_DIRECTORY='$JOURS_ROOT_DIRECTORY/entries'" >>~/.joursconfig
-	echo "Enter a name for this journal"
-	read -r journal_name
-	### Create all the internal directories and files ###
-	cd "$JOURS_ROOT_DIRECTORY" || exit
-	mkdir entries exposed
-	mkdir entries/"$journal_name"
-	echo "CURRENT_JOURNAL='$journal_name'" >>"$JOURS_ROOT_DIRECTORY"/entries/.current
+	create_journal
+	source "$JOURS_ENTRIES_DIRECTORY"/.current
 	echo "AUTHOR='$AUTHOR'" >>~/.joursconfig
 	echo "
 Jours is a simple CLI designed for safe and secure journaling.
@@ -250,38 +243,47 @@ function execute_command() {
 		;;
 	login)
 		jours_login
+		check_current_journal
 		;;
 	logout)
 		check_logged_in_status
+		check_current_journal
 		jours_logout "$ARGUMENT_2_GLOBAL"
 		;;
 	unlock)
 		check_logged_in_status
+		check_current_journal
 		crypt unlock "$ARGUMENT_2_GLOBAL"
 		;;
 
 	lock)
 		check_logged_in_status
+		check_current_journal
 		crypt lock "$ARGUMENT_2_GLOBAL"
 		;;
 	compose)
 		check_logged_in_status
+		check_current_journal
 		compose
 		;;
 	read)
 		check_logged_in_status
+		check_current_journal
 		jours_read "$ARGUMENT_2_GLOBAL"
 		;;
 	create)
 		check_logged_in_status
+		check_current_journal
 		create_journal
 		;;
 	switch)
 		check_logged_in_status
+		check_current_journal
 		switch_journal "$ARGUMENT_2_GLOBAL"
 		;;
 	rehash)
 		check_logged_in_status
+		check_current_journal
 		rehash
 		;;
 	info)
@@ -312,6 +314,7 @@ function jours_login() {
 	validate_password "$pass"
 	# unlock / unzip entries directory
 	padlock_entries unlock "$pass"
+	source "$JOURS_ENTRIES_DIRECTORY"/.current
 	echo -e "${GREEN}Login succeeded${RESET}"
 	# if there is more than one journal, ask which journal to use
 	cd "$JOURS_ENTRIES_DIRECTORY" || exit
@@ -330,9 +333,16 @@ function switch_journal() {
 		read -r target_journal
 	fi
 
+	if [ -z "$target_journal" ]; then
+		echo -e "${RED}Please enter the name of a journal to use${RESET}"
+		switch_journal
+		return
+	fi
+
 	if [ ! -d "$JOURS_ENTRIES_DIRECTORY"/"$target_journal" ]; then
 		echo -e "${RED}This journal doesn't seem to exist.${RESET} Please type a valid journal or use ${GREEN}jours create${RESET} to make a new one."
 		switch_journal
+		return
 	fi
 
 	echo -e "Switched to ${GREEN}$target_journal${RESET}"
@@ -343,15 +353,23 @@ function create_journal() {
 	# prompt the name of the journal
 	echo -e "${GREEN}What's the name of this journal?${RESET}"
 	read -r new_journal_name
-	# validate name of journal
+	if [[ -z $new_journal_name ]]; then
+		echo "This name can't be blank. Try again."
+		create_journal
+		return
+	fi
 	# create the directory
 	mkdir "$JOURS_ROOT_DIRECTORY/entries/$new_journal_name"
 	# ask if you want to switch to this journal
-	echo "Do you want to switch to this journal now? [y/n]"
-	read -r answer
-	if [ "$answer" == "y" ]; then
-		echo -e "Switching to ${GREEN}$new_journal_name!${RESET}"
-		echo "CURRENT_JOURNAL='$new_journal_name'" >>"$JOURS_ROOT_DIRECTORY"/entries/.current
+	if [ -f $JOURS_ENTRIES_DIRECTORY/.current ]; then
+		echo "Do you want to switch to this journal now? [y/n]"
+		read -r answer
+		if [ "$answer" == "y" ]; then
+			echo -e "Using ${GREEN}$new_journal_name!${RESET}"
+			echo "CURRENT_JOURNAL='$new_journal_name'" > "$JOURS_ROOT_DIRECTORY"/entries/.current
+		fi
+	elif [[ ! -z $new_journal_name ]]; then
+		echo "CURRENT_JOURNAL='$new_journal_name'" > "$JOURS_ROOT_DIRECTORY"/entries/.current
 	fi
 }
 
@@ -361,7 +379,7 @@ function jours_logout() {
 	validate_password "$pass"
 	padlock_journals lock "$pass"
 	padlock_entries lock "$pass"
-	echo "${GREEN}Logout success! Goodbye."
+	echo -e "${GREEN}Logout success! Goodbye."
 }
 
 function validate_day_format() {
@@ -390,6 +408,13 @@ function check_logged_in_status() {
 		echo -e "${RED}Please log in to execute this command.${RESET}"
 		echo -e "Use ${GREEN}jours login${RESET}"
 		exit 1
+	fi
+}
+
+function check_current_journal() {
+	source $JOURS_ROOT_DIRECTORY/entries/.current
+	if [[ -z "$CURRENT_JOURNAL" ]]; then 
+		switch_journal
 	fi
 }
 
@@ -432,8 +457,6 @@ function create_password() {
 		if [ "$confirmed_pass" != "$NEW_PASS" ]; then
 			echo -e "${RED} Passwords don't match. Try again."
 			create_password
-		else
-			echo "Your password is $NEW_PASS"
 		fi
 	fi
 
@@ -649,7 +672,6 @@ function rehash() {
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 function compose() {
-
 	cd "$JOURS_ROOT_DIRECTORY"/entries/"$CURRENT_JOURNAL"/ || exit
 	current_month="$(date +"%Y-%m")"
 	if [ ! -d "$JOURS_ROOT_DIRECTORY/entries/$current_month" ]; then
@@ -661,7 +683,7 @@ function compose() {
 	fi
 	current_date=$(date +"%Y-%m-%d")
 	if [ -f "./$current_date.txt" ]; then
-		echo "exists."
+		echo "Opening today's entry."
 		open ./"$current_date".txt
 	else
 		local new_entry_name=$current_date.txt
