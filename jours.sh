@@ -44,6 +44,65 @@ ARGUMENT_2_GLOBAL=$2
 # # # # # # # # # # # # # # # # # # \__,_|\__|_|_|___/ # # # # # # # # # # # # # # # # #  # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+function execute_command() {
+	case $ARGUMENT_1_GLOBAL in
+	init)
+		init_journal
+		;;
+	login)
+		jours_login
+		check_current_journal
+		;;
+	logout)
+		check_logged_in_status
+		check_current_journal
+		jours_logout "$ARGUMENT_2_GLOBAL"
+		;;
+	unlock)
+		check_logged_in_status
+		check_current_journal
+		crypt unlock "$ARGUMENT_2_GLOBAL"
+		;;
+
+	lock)
+		check_logged_in_status
+		check_current_journal
+		crypt lock "$ARGUMENT_2_GLOBAL"
+		;;
+	compose)
+		check_logged_in_status
+		check_current_journal
+		compose
+		;;
+	read)
+		check_logged_in_status
+		check_current_journal
+		jours_read "$ARGUMENT_2_GLOBAL"
+		;;
+	create)
+		check_logged_in_status
+		check_current_journal
+		create_journal
+		;;
+	switch)
+		check_logged_in_status
+		check_current_journal
+		switch_journal "$ARGUMENT_2_GLOBAL"
+		;;
+	rehash)
+		check_logged_in_status
+		check_current_journal
+		rehash
+		;;
+	info)
+		jours_info
+		;;
+	*)
+		echo -e "Unknown command. please try again or use ${GREEN}jours info${RESET} if you're stuck."
+		;;
+	esac
+}
+
 function check_init_status() {
 	# check if config file has been created, unles the init command is being called
 	if [ ! -f "$CONFIG_PATH" ]; then
@@ -235,65 +294,6 @@ function check_arguments() {
 
 }
 
-function execute_command() {
-	case $ARGUMENT_1_GLOBAL in
-	init)
-		init_journal
-		;;
-	login)
-		jours_login
-		check_current_journal
-		;;
-	logout)
-		check_logged_in_status
-		check_current_journal
-		jours_logout "$ARGUMENT_2_GLOBAL"
-		;;
-	unlock)
-		check_logged_in_status
-		check_current_journal
-		crypt unlock "$ARGUMENT_2_GLOBAL"
-		;;
-
-	lock)
-		check_logged_in_status
-		check_current_journal
-		crypt lock "$ARGUMENT_2_GLOBAL"
-		;;
-	compose)
-		check_logged_in_status
-		check_current_journal
-		compose
-		;;
-	read)
-		check_logged_in_status
-		check_current_journal
-		jours_read "$ARGUMENT_2_GLOBAL"
-		;;
-	create)
-		check_logged_in_status
-		check_current_journal
-		create_journal
-		;;
-	switch)
-		check_logged_in_status
-		check_current_journal
-		switch_journal "$ARGUMENT_2_GLOBAL"
-		;;
-	rehash)
-		check_logged_in_status
-		check_current_journal
-		rehash
-		;;
-	info)
-		jours_info
-		;;
-	*)
-		echo -e "Unknown command. please try again or use ${GREEN}jours info${RESET} if you're stuck."
-		;;
-	esac
-}
-
 function find_entry_location() {
 	local entry_name="$1"
 	directory_name=$(echo "$entry_name" | cut -c 1-7)
@@ -469,11 +469,9 @@ function create_password() {
 
 function validate_password() {
 	# prompt password
-	# validate password against hash + salt\
+	# validate password against hash + salt
 	echo "What's your password?"
-
 	local password=$1
-	echo "typed password: $password"
 	# hash password with salt
 	salt_in=$(cat "$JOURS_ROOT_DIRECTORY"/.salt)
 	hash_attempt=$(openssl passwd -1 -salt "$salt_in" "$password")
@@ -577,7 +575,6 @@ function padlock_journals() {
 	local password="$2"
 	# lock all journal entries
 	for jour in $JOURS_ENTRIES_DIRECTORY/*/; do
-		echo "journal: $jour"
 		for dir in $jour/*/; do
 			dir=${dir%*/} # remove the trailing "/"
 			padlock_multiple "$option" "${dir##*/}" "$password"
@@ -648,7 +645,7 @@ function rehash() {
 
 	echo -e "${GREEN}Creating new password!${RESET}"
 	create_password
-	echo "${GREEN}Your password was successfully changed. To complete the process please logout and log back in. Wait till later? [y/n]"
+	echo -e "${GREEN}Your password was successfully changed. To complete the process please logout and log back in. Wait till later? [y/n]"
 	read -r answer
 
 	if [ "$answer" = "n" ]; then
