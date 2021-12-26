@@ -107,7 +107,6 @@ function init_journal() {
 	echo "JOURS_ROOT_DIRECTORY='$JOURS_ROOT_DIRECTORY'" >>~/.joursconfig
 	echo "JOURS_ENTRIES_DIRECTORY='$JOURS_ROOT_DIRECTORY/entries'" >>~/.joursconfig
 	create_journal
-	source "$JOURS_ENTRIES_DIRECTORY"/.current
 	echo "AUTHOR='$AUTHOR'" >>~/.joursconfig
 	echo "
 Jours is a simple CLI designed for safe and secure journaling.
@@ -350,6 +349,7 @@ function switch_journal() {
 }
 
 function create_journal() {
+	source $CONFIG_PATH
 	# prompt the name of the journal
 	echo -e "${GREEN}What's the name of this journal?${RESET}"
 	read -r new_journal_name
