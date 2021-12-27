@@ -27,11 +27,9 @@ You will then be prompted to create a password for your journal. Just hit enter 
 
 **IMPORTANT**: **If you forget or lose your password, you will not have access to any of your encrypted entries!**
 
-Once initiated, you can run
-```
-jours login
-```
-You'll be prompted for a password. 
+Once initiated, you will be logged in. 
+
+Once you logout (with `jours logout`) use `jours login` to unlock your diary.
 
 ## Creating an entry
 Compose today's entry with:
