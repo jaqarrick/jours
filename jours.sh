@@ -302,15 +302,23 @@ function check_arguments() {
 }
 
 function find_entry_location() {
+	if [ ! -d "$JOURS_ENTRIES_DIRECTORY/$CURRENT_JOURNAL" ]; then 
+		echo -e "${RED} Something went wrong, current journal not found.${RESET} Use ${GREEN}jours switch${RESET} or ${GREEN}jours create${RESET}"
+		exit 1
+	fi
 	local entry_name="$1"
 	directory_name=$(echo "$entry_name" | cut -c 1-7)
-	echo "$JOURS_ENTRIES_DIRECTORY/$directory_name/$entry_name"
+	echo "$JOURS_ENTRIES_DIRECTORY/$CURRENT_JOURNAL/$directory_name/$entry_name"
 }
 
 function find_entry_directory() {
+	if [ ! -d "$JOURS_ENTRIES_DIRECTORY/$CURRENT_JOURNAL" ]; then 
+		echo -e "${RED} Something went wrong, current journal not found.${RESET} Use ${GREEN}jours switch${RESET} or ${GREEN}jours create${RESET}"
+		exit 1
+	fi
 	local entry_name="$1"
 	directory_name=$(echo "$entry_name" | cut -c 1-7)
-	echo "$JOURS_ENTRIES_DIRECTORY/$directory_name"
+	echo "$JOURS_ENTRIES_DIRECTORY/$CURRENT_JOURNAL/$directory_name"
 }
 
 function jours_login() {
@@ -319,8 +327,10 @@ function jours_login() {
 	# validate password
 	validate_password "$pass"
 	# unlock / unzip entries directory
+	echo -e "${GREEN}Decrypting entries directory${RESET}"
 	padlock_entries unlock "$pass"
 	source "$JOURS_ENTRIES_DIRECTORY"/.current
+	mkdir "$JOURS_ROOT_DIRECTORY/exposed"
 	echo -e "${GREEN}Login succeeded${RESET}"
 	# if there is more than one journal, ask which journal to use
 	cd "$JOURS_ENTRIES_DIRECTORY" || exit
@@ -384,9 +394,15 @@ function jours_logout() {
 	echo "Please confirm your password:"
 	read -r -s pass
 	validate_password "$pass"
+	echo "Removing exposed journals"
+	clear_session_info
 	padlock_journals lock "$pass"
 	padlock_entries lock "$pass"
 	echo -e "${GREEN}Logout success! Goodbye."
+}
+
+function clear_session_info() {
+	rm -rf $JOURS_ROOT_DIRECTORY/exposed
 }
 
 function validate_day_format() {
@@ -688,6 +704,16 @@ function compose() {
 	if [ -f "./$current_date.txt" ]; then
 		echo "Opening today's entry."
 		open ./"$current_date".txt
+	elif [ -f "./$current_date.enc" ]; then 
+		echo -e "${RED}Today's entry is encrypted. Unlocking it now...${RESET}" 
+		crypt unlock $current_date
+		if [ -f "./$current_date.txt" ]; then
+			echo -e "${GREEN}Opening today's entry${RESET}."
+			open "./$current_date.txt"
+		else 
+			echo -e "${RED}Entry: $current_date couldn't be unlocked. Try again."
+			exit 1
+		fi
 	else
 		local new_entry_name=$current_date.txt
 		echo "$new_entry_name"
