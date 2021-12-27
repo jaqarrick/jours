@@ -34,22 +34,18 @@ jours login
 You'll be prompted for a password. 
 
 ## Creating an entry
-Compose an entry with:
+Compose today's entry with:
 ```
 jours compose
 ```
-Or, edit a specific entry with 
-```
-jours compose <date>
-```
-`<date>` is in `YYYY-MM-DD` format, for example:
-```
-jours compose 2011-11-31
-```
 
 ## Reading your entries
-If you want to read a single entry or collection of entries without editing run
+If you want to read all entries, a single entry, or a collection of entries without editing run
 ```
+jours read all 
+
+# or
+
 jours read <date>
 
 # or
@@ -66,7 +62,7 @@ To logout from jours simply type
 jours logout
 ```
 
-This encrypts all unencrypted entries, removes the `journal.txt` file, and locks the `/entries` directory.
+This encrypts all unencrypted entries, removes any exposed journals read during your login session, and locks the `/entries` directory.
 
 ## Switching Journals 
 Jours supports multiple journals to keep your thoughts and notes more organized. To create a new one use
