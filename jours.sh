@@ -518,7 +518,6 @@ function padlock() {
 	[[ $option = "lock" ]] && file_type=".enc" || file_type=".txt"
 	file_directory="$(find_entry_directory "$file_to_lock")"
 	local output_file_path=$file_directory/$file_to_lock$file_type
-	echo "file location: $file_location, file directory: $file_directory"
 	encrypt_decrypt_single_file $encrypt_option "$file_location" "$output_file_path" "$password"
 	if [[ $* == *-read* ]]; then
 		local journal_file_path=$JOURS_ROOT_DIRECTORY/exposed/$CURRENT_JOURNAL.txt
@@ -546,9 +545,11 @@ function padlock_multiple() {
 		for file in *; do
 			input_file="$(pwd)/$file"
 			output_file="$(pwd)/${file%.*}$output_file_type"
-			if [[ $file == *$input_file_type ]]; then
-				encrypt_decrypt_single_file $encrypt_option "$input_file" "$output_file" "$password"
-				rm "$input_file"
+			if [ ! -f $output_file ]; then 
+				if [[ $file == *$input_file_type ]]; then
+					encrypt_decrypt_single_file $encrypt_option "$input_file" "$output_file" "$password"
+					rm "$input_file"
+				fi
 			fi
 
 			if [[ $* == *-read* ]]; then
@@ -749,7 +750,7 @@ function jours_read() {
 	validate_password "$password"
 
 	local target_date=$1
-	local option="unlock"
+	option="unlock"
 	if validate_month_format "$target_date"; then
 		echo -e "${RED}$target_date month $target_date${RESET}"
 		padlock_multiple $option "$target_date" "$password" -read
