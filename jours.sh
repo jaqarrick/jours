@@ -82,7 +82,7 @@ function execute_command() {
 	create)
 		check_logged_in_status
 		check_current_journal
-		create_journal
+		create_journal "$ARGUMENT_2_GLOBAL"
 		;;
 	switch)
 		check_logged_in_status
@@ -366,16 +366,26 @@ function switch_journal() {
 }
 
 function create_journal() {
+
+	new_journal_name="$1"
 	source $CONFIG_PATH
-	# prompt the name of the journal
-	echo -e "${GREEN}What's the name of this journal?${RESET}"
-	read -r new_journal_name
 	if [[ -z $new_journal_name ]]; then
-		echo "This name can't be blank. Try again."
+		# prompt the name of the journal if no name passed
+		echo -e "${GREEN}What's the name of this journal?${RESET}"
+		read -r new_journal_name
+	fi
+	
+	if [[ -z $new_journal_name ]]; then
+		echo -e "${RED}This name can't be blank. Try again.${RESET}"
 		create_journal
 		return
 	fi
 	# create the directory
+	if [ -d "$JOURS_ROOT_DIRECTORY/entries/$new_journal_name" ]; then
+		echo -e "${RED}Journal already exists. Try again.${RESET}"
+		create_journal
+		return
+	fi
 	mkdir "$JOURS_ROOT_DIRECTORY/entries/$new_journal_name"
 	# ask if you want to switch to this journal
 	if [ -f $JOURS_ENTRIES_DIRECTORY/.current ]; then
