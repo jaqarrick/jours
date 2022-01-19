@@ -274,6 +274,10 @@ function find_entry_directory() {
 }
 
 function jours_login() {
+	if [ -d "$JOURS_ENTRIES_DIRECTORY" ]; then
+		echo -e "${RED}Look's like you're already logged in...${RESET}"
+		exit 1
+	fi
 	echo "Welcome to jours. Please type your password:"
 	read -s -r pass
 	# validate password
@@ -353,6 +357,10 @@ function create_journal() {
 }
 
 function jours_logout() {
+	if [ -f "$JOURS_ROOT_DIRECTORY/locked.enc" ]; then
+		echo -e "${RED}You're not logged in.${RESET}"
+		exit 1
+	fi
 	echo "Please confirm your password:"
 	read -r -s pass
 	validate_password "$pass"
