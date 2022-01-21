@@ -580,13 +580,13 @@ function padlock_entries {
 	local password="$2"
 	cd "$JOURS_ROOT_DIRECTORY" || exit
 	if [ "$option" = "lock" ]; then
-		tar -czvf entries.tgz entries
+		tar -czf entries.tgz entries
 		encrypt_decrypt_single_file encode "$JOURS_ROOT_DIRECTORY"/entries.tgz locked.enc "$password"
 		rm -rf entries
 		rm entries.tgz
 	elif [ "$option" = "unlock" ]; then
 		encrypt_decrypt_single_file decode "$JOURS_ROOT_DIRECTORY"/locked.enc "$JOURS_ROOT_DIRECTORY"/entries.tgz "$password"
-		tar -xzvf entries.tgz
+		tar -xzf entries.tgz
 		rm "$JOURS_ROOT_DIRECTORY"/entries.tgz
 		rm "$JOURS_ROOT_DIRECTORY"/locked.enc
 	fi
