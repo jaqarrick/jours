@@ -638,7 +638,7 @@ function rehash() {
 
 	echo -e "${GREEN}Creating new password!${RESET}"
 	create_password
-	echo -e "${GREEN}Your password was successfully changed. To complete the process please logout and log back in. Wait till later? [y/n]"
+	echo -e "${GREEN}Your password was successfully changed. To complete the process please logout and log back in. Wait till later? [y/n]${RESET}"
 	read -r answer
 
 	if [ "$answer" = "n" ]; then
