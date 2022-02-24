@@ -441,7 +441,7 @@ function create_password() {
 
 	cd "$target_directory" || exit
 	# generate salt
-	openssl rand -base64 6 -out .salt
+	openssl rand -base64 -out .salt 6
 	if [[ -z $NEW_PASS ]]; then
 		echo "Generating new password..."
 		echo
