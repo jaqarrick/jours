@@ -129,13 +129,13 @@ function init_journal() {
 	fi
 
 	echo -e "${ULINE}Welcome to jours, a simple CLI designed for safe and secure journaling${RESET}"
-	echo -e "Where would you like your journal to live? Copy and paste the directory in the console. Defaults to ${BLUE}~/Documents/\n${RESET}"
+	echo -e "Where would you like your journal to live? Copy and paste the directory in the console. Defaults to ${BLUE}$HOME/jours\n${RESET}"
 	read -r JOURS_ROOT_DIRECTORY
 
 	# Check if string is empty using -z
 	if [[ -z $JOURS_ROOT_DIRECTORY ]]; then
 		# TODO: change directory location based on OS. Right now its just MACOSX
-		JOURS_ROOT_DIRECTORY="$HOME/Documents/jours"
+		JOURS_ROOT_DIRECTORY="$HOME/jours"
 
 		echo "No input entered, using $JOURS_ROOT_DIRECTORY."
 
@@ -409,6 +409,17 @@ function check_current_journal() {
 	fi
 }
 
+function open_file() {
+	file_path="$1"
+	if [ -x "$(which xdg-open)" ]; then
+		xdg-open "$file_path"
+	elif [ -x "$(which open)" ]; then 
+		open "$file_path"
+	else
+		echo -e "${RED}Unable to open file${RESET}"
+	fi
+}
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -672,13 +683,13 @@ function compose() {
 	current_date=$(date +"%Y-%m-%d")
 	if [ -f "./$current_date.txt" ]; then
 		echo "Opening today's entry."
-		open ./"$current_date".txt
+		open_file ./"$current_date".txt
 	elif [ -f "./$current_date.enc" ]; then 
 		echo -e "${RED}Today's entry is encrypted. Unlocking it now...${RESET}" 
 		crypt unlock $current_date
 		if [ -f "./$current_date.txt" ]; then
 			echo -e "${GREEN}Opening today's entry${RESET}."
-			open "./$current_date.txt"
+			open_file "./$current_date.txt"
 		else 
 			echo -e "${RED}Entry: $current_date couldn't be unlocked. Try again."
 			exit 1
@@ -689,7 +700,7 @@ function compose() {
 		touch "$new_entry_name"
 		echo "$current_date" >>"$current_date".txt
 		echo "Hello jours" >>"$current_date".txt
-		open "$new_entry_name"
+		open_file "$new_entry_name"
 	fi
 
 }
@@ -737,7 +748,7 @@ function jours_read() {
 	read -r answer
 
 	if [ "$answer" = "y" ]; then
-		open "$JOURS_ROOT_DIRECTORY"/exposed/"$CURRENT_JOURNAL".txt
+		open_file "$JOURS_ROOT_DIRECTORY"/exposed/"$CURRENT_JOURNAL".txt
 	else
 		echo -e "${RED}Goodbye.${RESET}"
 		exit 1
@@ -748,7 +759,7 @@ function jours_read() {
 # INFO FUNCTION
 function jours_info() {
 	if [ -d "$JOURS_ROOT_DIRECTORY" ]; then
-		open "$JOURS_ROOT_DIRECTORY"/readme.txt
+		open_file "$JOURS_ROOT_DIRECTORY"/readme.txt
 	else
 		echo -e "No root directory, run ${GREEN}jours init${RESET}"
 		exit 1
