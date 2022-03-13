@@ -95,10 +95,25 @@ function execute_command() {
 	info)
 		jours_info
 		;;
+	status)
+		print_status
+		;;
 	*)
 		echo -e "Unknown command. please try again or use ${GREEN}jours info${RESET} if you're stuck."
 		;;
 	esac
+}
+
+function print_status() {
+	if [ -x "$(which tree)" ]; then
+		tree "$JOURS_ROOT_DIRECTORY"
+	fi
+	if [ ! -d "$JOURS_ROOT_DIRECTORY/entries" ]; then
+				echo -e "${Green}Journal Locked${RESET}"
+				exit 0
+	fi
+	echo -e "${Green}Journal Unlocked${RESET}"
+	exit 0
 }
 
 function check_init_status() {
