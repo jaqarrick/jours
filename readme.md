@@ -106,6 +106,9 @@ jours lock all
 jours unlock all
 ```
 
+## Status
+Use `jours status` to print the current state of jours. If you have the `tree` command on your path jours will print out the jours directory file tree. 
+
 ## Changing your password
 To change your password use
 ```
