@@ -106,9 +106,6 @@ jours lock all
 jours unlock all
 ```
 
-## Status
-Use `jours status` to print the current state of jours. If you have the `tree` command on your path jours will print out the jours directory file tree. 
-
 ### Other commands
 ```
 jours status  : get the current state of your journal
