@@ -24,6 +24,7 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+CURRENT_VERSION="1.0.3"
 # SET UP GLOBAL VARS
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -95,6 +96,9 @@ function execute_command() {
 	info)
 		jours_info
 		;;
+	version)
+		get_version
+		;;
 	status)
 		print_status
 		;;
@@ -104,13 +108,17 @@ function execute_command() {
 	esac
 }
 
+function get_version() {
+	echo "$CURRENT_VERSION"
+}
+
 function print_status() {
 	if [ -x "$(which tree)" ]; then
 		tree "$JOURS_ROOT_DIRECTORY"
 	fi
 	if [ ! -d "$JOURS_ROOT_DIRECTORY/entries" ]; then
-				echo -e "${Green}Journal Locked${RESET}"
-				exit 0
+		echo -e "${Green}Journal Locked${RESET}"
+		exit 0
 	fi
 	echo -e "${Green}Journal Unlocked${RESET}"
 	exit 0
@@ -267,7 +275,7 @@ function check_arguments() {
 }
 
 function find_entry_location() {
-	if [ ! -d "$JOURS_ENTRIES_DIRECTORY/$CURRENT_JOURNAL" ]; then 
+	if [ ! -d "$JOURS_ENTRIES_DIRECTORY/$CURRENT_JOURNAL" ]; then
 		echo -e "${RED} Something went wrong, current journal not found.${RESET} Use ${GREEN}jours switch${RESET} or ${GREEN}jours create${RESET}"
 		exit 1
 	fi
@@ -277,7 +285,7 @@ function find_entry_location() {
 }
 
 function find_entry_directory() {
-	if [ ! -d "$JOURS_ENTRIES_DIRECTORY/$CURRENT_JOURNAL" ]; then 
+	if [ ! -d "$JOURS_ENTRIES_DIRECTORY/$CURRENT_JOURNAL" ]; then
 		echo -e "${RED} Something went wrong, current journal not found.${RESET} Use ${GREEN}jours switch${RESET} or ${GREEN}jours create${RESET}"
 		exit 1
 	fi
@@ -343,7 +351,7 @@ function create_journal() {
 		echo -e "${GREEN}What's the name of this journal?${RESET}"
 		read -r new_journal_name
 	fi
-	
+
 	if [[ -z $new_journal_name ]]; then
 		echo -e "${RED}This name can't be blank. Try again.${RESET}"
 		create_journal
@@ -362,10 +370,10 @@ function create_journal() {
 		read -r answer
 		if [ "$answer" == "y" ]; then
 			echo -e "Using ${GREEN}$new_journal_name!${RESET}"
-			echo "CURRENT_JOURNAL='$new_journal_name'" > "$JOURS_ROOT_DIRECTORY"/entries/.current
+			echo "CURRENT_JOURNAL='$new_journal_name'" >"$JOURS_ROOT_DIRECTORY"/entries/.current
 		fi
 	elif [[ ! -z $new_journal_name ]]; then
-		echo "CURRENT_JOURNAL='$new_journal_name'" > "$JOURS_ROOT_DIRECTORY"/entries/.current
+		echo "CURRENT_JOURNAL='$new_journal_name'" >"$JOURS_ROOT_DIRECTORY"/entries/.current
 	fi
 }
 
@@ -419,7 +427,7 @@ function check_logged_in_status() {
 
 function check_current_journal() {
 	source $JOURS_ROOT_DIRECTORY/entries/.current
-	if [[ -z "$CURRENT_JOURNAL" ]]; then 
+	if [[ -z "$CURRENT_JOURNAL" ]]; then
 		switch_journal
 	fi
 }
@@ -428,7 +436,7 @@ function open_file() {
 	file_path="$1"
 	if [ -x "$(which xdg-open)" ]; then
 		xdg-open "$file_path"
-	elif [ -x "$(which open)" ]; then 
+	elif [ -x "$(which open)" ]; then
 		open "$file_path"
 	else
 		echo -e "${RED}Unable to open file${RESET}"
@@ -539,7 +547,7 @@ function padlock_multiple() {
 		for file in *; do
 			input_file="$(pwd)/$file"
 			output_file="$(pwd)/${file%.*}$output_file_type"
-			if [ ! -f $output_file ]; then 
+			if [ ! -f $output_file ]; then
 				if [[ $file == *$input_file_type ]]; then
 					encrypt_decrypt_single_file $encrypt_option "$input_file" "$output_file" "$password"
 					rm "$input_file"
@@ -699,13 +707,13 @@ function compose() {
 	if [ -f "./$current_date.txt" ]; then
 		echo "Opening today's entry."
 		open_file ./"$current_date".txt
-	elif [ -f "./$current_date.enc" ]; then 
-		echo -e "${RED}Today's entry is encrypted. Unlocking it now...${RESET}" 
+	elif [ -f "./$current_date.enc" ]; then
+		echo -e "${RED}Today's entry is encrypted. Unlocking it now...${RESET}"
 		crypt unlock $current_date
 		if [ -f "./$current_date.txt" ]; then
 			echo -e "${GREEN}Opening today's entry${RESET}."
 			open_file "./$current_date.txt"
-		else 
+		else
 			echo -e "${RED}Entry: $current_date couldn't be unlocked. Try again."
 			exit 1
 		fi
